@@ -15,3 +15,7 @@
 * introduction to gradient descent
 [fr](https://www.youtube.com/watch?v=rcl_YRyoLIY),
 [fr](https://www.youtube.com/watch?v=HmAH6Ct1rc4)
+
+## Python
+
+* [csvReader](https://docs.python.org/fr/3/library/csv.html#csv.DictReader)
