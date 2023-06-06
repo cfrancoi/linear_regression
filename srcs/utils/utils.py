@@ -1,4 +1,4 @@
-def estimate_price(th0: float, th1: float, mileage: int) -> int:
+def estimate_price(th0: float, th1: float, mileage: float) -> float:
     """
     Estimate the price of the product.
     :param th0: Theta0

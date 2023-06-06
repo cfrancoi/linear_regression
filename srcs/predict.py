@@ -4,7 +4,6 @@ import sys
 
 from utils import utils
 
-
 def main() -> int:
     wanted = input("Enter wanted milenage price: ")
 
