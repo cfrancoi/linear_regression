@@ -2,10 +2,11 @@
 import sys
 import csv
 import matplotlib.pyplot as plt
+from statistics import mean, pstdev, quantiles
 
 from utils import utils
 
-learningRate = float(0.00025)
+learningRate = float(0.005)
 THETA_FILE = "theta.csv"
 
 #move to utils
@@ -55,15 +56,18 @@ def get_data() -> [[], []]:
 def gradient_descent(X, Y, M, th0, th1):
     tmp0 = float(0)
     tmp1 = float(0)
-    for i in range(M):
+    for i in range(0, M):
         value = utils.estimate_price(th0, th1, X[i])
-        tmp0 += float(value - Y[i])
-        tmp1 += float((value - Y[i]) * X[i])
-        print("=== {th0} {th1} {value} X={x} Y={y} ===".format(th0=tmp0, th1=tmp1, value=value, x=X[i], y=Y[i]))
+        tmp = float(value - Y[i])
+        tmp0 += tmp
+        tmp1 += float(tmp * X[i])
+        # print("=== {th0} {th1} {value} X={x} Y={y} ===".format(th0=tmp0, th1=tmp1, value=value, x=X[i], y=Y[i]))
         
 
     tmp0 = float(learningRate * tmp0 * float(1/M) )
     tmp1 = float(learningRate * tmp1 * float(1/M))
+
+    # tmp1 = 0
 
     print("===  LEARN: {th0} {th1} ===".format(th0=tmp0, th1=tmp1))
     
@@ -72,32 +76,51 @@ def gradient_descent(X, Y, M, th0, th1):
 
 def get_new_theta(X, Y, M, th0, th1, rep):
     cost = []
+
     for _ in range(0, rep):
         [tmp0, tmp1] = gradient_descent(X, Y, M, th0, th1)
         th0 = th0 - tmp0
         th1 = th1 - tmp1
         cost.append(get_cost(X, Y, th0, th1, M))
-        print("last theta: {th0} {th1} ".format(th0=th0, th1=th1))
+        print("last theta: {th0} {th1} {cost}".format(th0=th0, th1=th1, cost=cost[-1]))
     
-    return [th0, th1, cost]
+    return [th0, th1, cost, theta0, theta1]
+
+def normalize(lst):
+    new_lst = []
+
+    lst_mean = mean(lst)
+    o = pstdev(lst)
+
+    [q1, q2, q3] = quantiles(lst)
+
+    for value in lst:
+        # new_lst.append((value - max(lst)) / (max(lst) - min(lst)))
+        new_lst.append((value - lst_mean) / (o))
+        # new_lst.append((value - lst_mean) / (q3 - q1))
+
+    return new_lst
+
 
 def main() -> int:
     [X, Y] = get_data()
 
     M = len(X)
 
+    x_train = normalize(X)
+    y_train = normalize(Y)
+
     [th0, th1] = get_last_theta()
 
     print(M)
     print("last theta: {th0} {th1}".format(th0=th0, th1=th1))
 
-    [new_th0, new_th1, cost] = get_new_theta(X, Y, M, th0, th1, 5)
+    [new_th0, new_th1, cost] = get_new_theta(x_train, y_train, M, th0, th1, 10)
 
     
     print("new theta: {th0} {th1}".format(th0=new_th0, th1=new_th1))
-    print(utils.estimate_price(new_th0, new_th1, 60949))
     
-    figure, axis = plt.subplots(1, 2)
+    figure, axis = plt.subplots(1, 3)
 
     line_x = [min(X), max(X)]
     line_y = [(new_th1 * i) + new_th0 for i in line_x]
@@ -106,9 +129,7 @@ def main() -> int:
 
     axis[1].plot(cost)
     plt.show()
-
     
-        
     return 0
 
 
