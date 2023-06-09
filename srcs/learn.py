@@ -3,6 +3,7 @@ import sys
 import csv
 import matplotlib.pyplot as plt
 from statistics import mean, pstdev, quantiles
+import math
 
 from utils import utils
 
@@ -11,20 +12,14 @@ THETA_FILE = "theta.csv"
 
 #move to utils
 def get_last_theta() -> [float, float]:
-    th0, th1 = 0, 0
+    theta = [0, 0]
     try:
         with open(THETA_FILE, newline='') as csvfile:
-                fieldnames = ['th0', 'th1']
-                data = csv.DictReader(csvfile, fieldnames=fieldnames)
-                x = 0
-                for field in data:
-                    print(field['km'], field['price'])
-                    if (x != 0): #TODO check a better way
-                        th0 = float(field['th0'])
-                        th1 = float(field['th1'])
-                    x += 1
+                data = csv.reader(csvfile, delimiter=',')
+                for row in data:
+                        theta = [float(row[0]), float(row[1])]
     finally:
-        return [th0, th1]
+        return theta
 
 def get_cost(X, Y, th0, th1, M) -> float:
     value= 0
@@ -59,8 +54,8 @@ def gradient_descent(X, Y, M, th0, th1):
     for i in range(0, M):
         value = utils.estimate_price(th0, th1, X[i])
         tmp = float(value - Y[i])
-        tmp0 += tmp
         tmp1 += float(tmp * X[i])
+        tmp0 += tmp
         # print("=== {th0} {th1} {value} X={x} Y={y} ===".format(th0=tmp0, th1=tmp1, value=value, x=X[i], y=Y[i]))
         
 
@@ -69,7 +64,7 @@ def gradient_descent(X, Y, M, th0, th1):
 
     # tmp1 = 0
 
-    print("===  LEARN: {th0} {th1} ===".format(th0=tmp0, th1=tmp1))
+    # print("===  LEARN: {th0} {th1} ===".format(th0=tmp0, th1=tmp1))
     
 
     return [tmp0, tmp1]
@@ -82,50 +77,52 @@ def get_new_theta(X, Y, M, th0, th1, rep):
         th0 = th0 - tmp0
         th1 = th1 - tmp1
         cost.append(get_cost(X, Y, th0, th1, M))
-        print("last theta: {th0} {th1} {cost}".format(th0=th0, th1=th1, cost=cost[-1]))
+        # print("last theta: {th0} {th1} {cost}".format(th0=th0, th1=th1, cost=cost[-1]))
     
-    return [th0, th1, cost, theta0, theta1]
+    return [th0, th1, cost]
 
-def normalize(lst):
-    new_lst = []
-
+def normalize_lst(lst):
     lst_mean = mean(lst)
-    o = pstdev(lst)
+    std = math.sqrt(sum((x - lst_mean) ** 2 for x in lst) / len(lst))
 
-    [q1, q2, q3] = quantiles(lst)
+    return [float((x - lst_mean) / std) for x in lst] 
 
-    for value in lst:
-        # new_lst.append((value - max(lst)) / (max(lst) - min(lst)))
-        new_lst.append((value - lst_mean) / (o))
-        # new_lst.append((value - lst_mean) / (q3 - q1))
+def denormalize_value(lst, value):
+    lst_mean = mean(lst)
+    std = math.sqrt(sum((x - lst_mean) ** 2 for x in lst) / len(lst))
+    return float((x * std) + mean)
 
-    return new_lst
 
+def save_theta(th0, th1):
+    with open(THETA_FILE, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile, delimiter=',')
+        writer.writerow([th0, th1])        
 
 def main() -> int:
     [X, Y] = get_data()
 
     M = len(X)
 
-    x_train = normalize(X)
-    y_train = normalize(Y)
+    y_train = normalize_lst(Y)
+    x_train = normalize_lst(X)
 
     [th0, th1] = get_last_theta()
 
     print(M)
     print("last theta: {th0} {th1}".format(th0=th0, th1=th1))
 
-    [new_th0, new_th1, cost] = get_new_theta(x_train, y_train, M, th0, th1, 10)
+    [new_th0, new_th1, cost] = get_new_theta(x_train, y_train, M, th0, th1, 10000)
 
-    
     print("new theta: {th0} {th1}".format(th0=new_th0, th1=new_th1))
-    
-    figure, axis = plt.subplots(1, 3)
 
-    line_x = [min(X), max(X)]
+    save_theta(new_th0, new_th1)
+    
+    figure, axis = plt.subplots(1, 2)
+
+    line_x = [min(x_train), max(x_train)]
     line_y = [(new_th1 * i) + new_th0 for i in line_x]
     axis[0].plot(line_x, line_y, 'b')
-    axis[0].plot(X, Y, 'ro')
+    axis[0].plot(x_train, y_train, 'ro')
 
     axis[1].plot(cost)
     plt.show()

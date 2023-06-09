@@ -2,7 +2,8 @@
 
 import sys
 
-from utils import utils
+from utils.utils import estimate_price
+from learn import get_last_theta
 
 def main() -> int:
     wanted = input("Enter wanted milenage price: ")
@@ -11,8 +12,10 @@ def main() -> int:
         wanted = int(wanted)
     except ValueError: # TODO check and send error message
         return 1
+
+    [th0, th1] = get_last_theta()
     
-    price = utils.estimate_price(0, 0, wanted) #TODO get th0 abd th1
+    price = estimate_price(th0, th1, wanted) #TODO get th0 abd th1
 
     print(f"Estimated price: {price}")
     return 0
