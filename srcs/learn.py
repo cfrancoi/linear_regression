@@ -90,7 +90,7 @@ def normalize_lst(lst):
 def denormalize_value(lst, value):
     lst_mean = mean(lst)
     std = math.sqrt(sum((x - lst_mean) ** 2 for x in lst) / len(lst))
-    return float((x * std) + mean)
+    return float((value  * std) + lst_mean)
 
 
 def save_theta(th0, th1):
@@ -119,12 +119,18 @@ def main() -> int:
     
     figure, axis = plt.subplots(1, 2)
 
-    line_x = [min(x_train), max(x_train)]
-    line_y = [(new_th1 * i) + new_th0 for i in line_x]
+    line_x = [denormalize_value(X, min(x_train)), denormalize_value( X ,max(x_train))]
+    # line_x = [denormalize_value(line_x)]
+    line_y = [((new_th1 * i) + new_th0) for i in [min(x_train), max(x_train)]]
+    print(line_y)
+    line_y = [ denormalize_value(Y, y) for y in line_y]
+    print(line_y)
     axis[0].plot(line_x, line_y, 'b')
-    axis[0].plot(x_train, y_train, 'ro')
+    axis[0].plot(X, Y, 'ro')
+    axis[0].set_title('Data')
 
     axis[1].plot(cost)
+    axis[1].set_title('Cost evolution')
     plt.show()
     
     return 0
